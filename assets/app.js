@@ -487,6 +487,7 @@
     var p = $("#provider-select").value;
     $("#model-hint").textContent =
       "Leave blank to use the default (" + AI.defaultModel(p) + ").";
+    $("#gemini-note").hidden = p !== "gemini";
   }
 
   $("#settings-btn").addEventListener("click", openSettings);

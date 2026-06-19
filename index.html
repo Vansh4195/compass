@@ -151,6 +151,7 @@
           <select id="provider-select">
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="openai">OpenAI</option>
+            <option value="gemini">Gemini (free)</option>
           </select>
         </label>
 
@@ -172,8 +173,14 @@
         </div>
 
         <p class="muted small">
-          Keys: get an Anthropic key at console.anthropic.com or an OpenAI key at platform.openai.com.
+          Keys: get an Anthropic key at console.anthropic.com, an OpenAI key at platform.openai.com,
+          or a <strong>free</strong> Gemini key at aistudio.google.com.
           A browser-pasted key is convenient but visible to scripts on this page — use a key you can rotate.
+        </p>
+        <p class="muted small" id="gemini-note" hidden>
+          Gemini (free) uses Google's OpenAI-compatible endpoint and works browser-direct here.
+          It is also the free path for the test harness — see <code>tests/e2e.mjs</code>. If a browser
+          ever blocks it (CORS), use the Node test as the reliable free check.
         </p>
       </div>
     </div>
