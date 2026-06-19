@@ -1,0 +1,12 @@
+{
+  "name": "compass",
+  "version": "1.0.0",
+  "description": "A private, client-side life OS (habits, finances, goals) with an AI weekly reflection.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "node tests/e2e.mjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "MIT"
+}

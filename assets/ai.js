@@ -5,12 +5,17 @@
  * localStorage via storage.js). The request goes DIRECTLY from this
  * browser to the provider's API — never through any server of ours.
  *
- * Two providers are supported:
+ * Providers supported:
  *   - Anthropic (Claude): browser-direct via the
  *     `anthropic-dangerous-direct-browser-access` header.
  *   - OpenAI: browser-direct via the standard chat-completions endpoint.
+ *   - Gemini (free): Google's OpenAI-compatible chat-completions endpoint.
+ *     Free keys at aistudio.google.com. Uses the exact same request/parse
+ *     shape as OpenAI. (The endpoint returns CORS headers, so the
+ *     browser-direct call works; the Node test in tests/e2e.mjs is the
+ *     reliable free path if a future CORS change ever blocks the browser.)
  *
- * Both calls stream, so the reflection renders as it arrives. The caller
+ * All calls stream, so the reflection renders as it arrives. The caller
  * passes an onToken(textChunk) callback.
  */
 (function (global) {
@@ -18,8 +23,13 @@
 
   var DEFAULT_MODELS = {
     anthropic: "claude-opus-4-8",
-    openai: "gpt-4o"
+    openai: "gpt-4o",
+    gemini: "gemini-2.0-flash"
   };
+
+  // Google's OpenAI-compatible base. The chat-completions path mirrors OpenAI.
+  var GEMINI_BASE =
+    "https://generativelanguage.googleapis.com/v1beta/openai";
 
   function defaultModel(provider) {
     return DEFAULT_MODELS[provider] || DEFAULT_MODELS.anthropic;
@@ -140,7 +150,23 @@
   function reflect(data, settings, onToken) {
     var summary = buildSummary(data);
     if (settings.provider === "openai") {
-      return callOpenAI(summary, settings, onToken);
+      return callOpenAICompatible(
+        "https://api.openai.com/v1/chat/completions",
+        "openai",
+        summary,
+        settings,
+        onToken
+      );
+    }
+    if (settings.provider === "gemini") {
+      // Google's endpoint speaks the same OpenAI chat-completions dialect.
+      return callOpenAICompatible(
+        GEMINI_BASE + "/chat/completions",
+        "gemini",
+        summary,
+        settings,
+        onToken
+      );
     }
     return callAnthropic(summary, settings, onToken);
   }
@@ -211,9 +237,11 @@
     });
   }
 
-  function callOpenAI(summary, settings, onToken) {
-    var model = settings.model || defaultModel("openai");
-    return fetch("https://api.openai.com/v1/chat/completions", {
+  // Shared path for any OpenAI-compatible chat-completions endpoint
+  // (OpenAI itself and Google Gemini's OpenAI-compatible endpoint).
+  function callOpenAICompatible(endpoint, provider, summary, settings, onToken) {
+    var model = settings.model || defaultModel(provider);
+    return fetch(endpoint, {
       method: "POST",
       headers: {
         "content-type": "application/json",

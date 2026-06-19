@@ -37,12 +37,20 @@ The weekly reflection calls a large language model. You paste your own API key i
 **Settings**; it is stored only in this browser's local storage and is sent only to
 the provider's API, straight from the browser — never to any intermediary.
 
-Two providers are supported:
+Three providers are supported:
 
-| Provider            | Where to get a key            | Default model     |
-| ------------------- | ----------------------------- | ----------------- |
-| Anthropic (Claude)  | `console.anthropic.com`       | `claude-opus-4-8` |
-| OpenAI              | `platform.openai.com`         | `gpt-4o`          |
+| Provider            | Where to get a key                      | Default model      |
+| ------------------- | --------------------------------------- | ------------------ |
+| Anthropic (Claude)  | `console.anthropic.com`                 | `claude-opus-4-8`  |
+| OpenAI              | `platform.openai.com`                   | `gpt-4o`           |
+| Gemini (free)       | `aistudio.google.com` (free, no card)   | `gemini-2.0-flash` |
+
+**Gemini** is the free option: it calls Google's OpenAI-compatible
+chat-completions endpoint with the same request shape as OpenAI. That endpoint
+returns CORS headers, so the browser-direct reflection works as a normal
+provider here. (See [Test for free with Gemini](#test-for-free-with-gemini) for
+the matching Node test, which is the reliable free path regardless of browser
+CORS.)
 
 To set it up:
 
@@ -72,6 +80,33 @@ python3 -m http.server 8000
 Or just open `index.html` directly in your browser. (Serving over `http://` is
 recommended so the AI fetch behaves consistently.)
 
+## Test for free with Gemini
+
+You can verify Compass's LLM call end-to-end for free, against a real model,
+without spending anything:
+
+1. Get a **free** Gemini API key at
+   [aistudio.google.com](https://aistudio.google.com) (no credit card).
+2. Run the test:
+
+   ```bash
+   GEMINI_API_KEY=your_key npm run test:e2e
+   # or, without npm:
+   GEMINI_API_KEY=your_key node tests/e2e.mjs
+   ```
+
+It prints `PASS` (and exits 0) when the model replies. With no key set it prints
+`SKIP` and exits 0; on any failure it prints `FAIL: <reason>` and exits non-zero.
+
+The test (`tests/e2e.mjs`) makes **one** tiny chat-completions call (max 20
+tokens, ≈ free) against Google's OpenAI-compatible endpoint
+(`https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`,
+model `gemini-2.0-flash`) — the same request/parse shape the app uses for its
+OpenAI-compatible providers. Because it runs in Node there is no browser and no
+CORS, so it is a reliable, free way to prove the request and response-parsing
+logic work. You can use the same free Gemini key in the in-app **Settings →
+Gemini (free)** provider to generate real reflections in the browser.
+
 ## Demo
 
 1. Open the app. On the **Habits** tab, add "Read 20 minutes" and click the circle
@@ -91,6 +126,8 @@ assets/styles.css minimal black & white theme (respects dark mode)
 assets/storage.js localStorage persistence + export/import
 assets/ai.js      builds the weekly summary and makes the browser-direct LLM call
 assets/app.js     UI rendering and event wiring
+tests/e2e.mjs     free end-to-end LLM test via Gemini (Node, no browser/CORS)
+package.json      npm scripts (test:e2e, serve) — the site itself needs no build
 ```
 
 ## License
