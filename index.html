@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compass — your personal life OS</title>
+  <meta name="description" content="A private, client-side life tracker for habits, finances, and goals — with an AI weekly reflection. Your data never leaves your browser." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%A7%AD</text></svg>" />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">◆</span>
+      <span class="brand-name">Compass</span>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist">
+      <button class="tab" data-view="habits" role="tab" aria-selected="true">Habits</button>
+      <button class="tab" data-view="finances" role="tab" aria-selected="false">Finances</button>
+      <button class="tab" data-view="goals" role="tab" aria-selected="false">Goals</button>
+      <button class="tab" data-view="reflect" role="tab" aria-selected="false">Reflect</button>
+    </nav>
+    <button class="ghost-btn" id="settings-btn" title="Settings" aria-label="Settings">Settings</button>
+  </header>
+
+  <main class="container">
+
+    <!-- ============ HABITS ============ -->
+    <section class="view" id="view-habits">
+      <div class="view-head">
+        <div>
+          <h1>Habits</h1>
+          <p class="sub">Check off what you did today. Streaks build on consecutive days.</p>
+        </div>
+      </div>
+
+      <form class="add-row" id="habit-form">
+        <input type="text" id="habit-name" placeholder="Add a habit (e.g. Read 20 minutes)" maxlength="80" required />
+        <button type="submit" class="primary-btn">Add</button>
+      </form>
+
+      <div id="habit-list" class="habit-list"></div>
+      <p class="empty" id="habit-empty" hidden>No habits yet. Add one above to get started.</p>
+    </section>
+
+    <!-- ============ FINANCES ============ -->
+    <section class="view" id="view-finances" hidden>
+      <div class="view-head">
+        <div>
+          <h1>Finances</h1>
+          <p class="sub">A simple ledger. Track income and expenses, see your monthly picture.</p>
+        </div>
+      </div>
+
+      <div class="stat-grid" id="finance-stats">
+        <div class="stat"><span class="stat-label">Income (this month)</span><span class="stat-value" id="stat-income">—</span></div>
+        <div class="stat"><span class="stat-label">Expenses (this month)</span><span class="stat-value" id="stat-expense">—</span></div>
+        <div class="stat"><span class="stat-label">Net (this month)</span><span class="stat-value" id="stat-net">—</span></div>
+      </div>
+
+      <div class="chart-wrap">
+        <h2 class="section-title">Net by month</h2>
+        <canvas id="finance-chart" height="180" aria-label="Bar chart of net amount per month"></canvas>
+        <p class="empty" id="chart-empty" hidden>Add transactions to see the chart.</p>
+      </div>
+
+      <form class="add-row finance-add" id="txn-form">
+        <select id="txn-type" aria-label="Transaction type">
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+        <input type="text" id="txn-desc" placeholder="Description" maxlength="80" required />
+        <input type="number" id="txn-amount" placeholder="Amount" step="0.01" min="0" required />
+        <input type="date" id="txn-date" aria-label="Date" />
+        <button type="submit" class="primary-btn">Add</button>
+      </form>
+
+      <div class="table-wrap">
+        <table id="txn-table">
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Type</th><th class="num">Amount</th><th></th></tr>
+          </thead>
+          <tbody id="txn-body"></tbody>
+        </table>
+        <p class="empty" id="txn-empty" hidden>No transactions yet.</p>
+      </div>
+    </section>
+
+    <!-- ============ GOALS ============ -->
+    <section class="view" id="view-goals" hidden>
+      <div class="view-head">
+        <div>
+          <h1>Goals</h1>
+          <p class="sub">What are you working toward? Track progress, mark them done.</p>
+        </div>
+      </div>
+
+      <form class="add-row" id="goal-form">
+        <input type="text" id="goal-name" placeholder="Add a goal (e.g. Run a half marathon)" maxlength="120" required />
+        <button type="submit" class="primary-btn">Add</button>
+      </form>
+
+      <div id="goal-list" class="goal-list"></div>
+      <p class="empty" id="goal-empty" hidden>No goals yet. Add one above.</p>
+    </section>
+
+    <!-- ============ REFLECT ============ -->
+    <section class="view" id="view-reflect" hidden>
+      <div class="view-head">
+        <div>
+          <h1>Weekly reflection</h1>
+          <p class="sub">An AI summary of your week's habits, finances, and goals — with a little encouragement.</p>
+        </div>
+      </div>
+
+      <div class="reflect-controls">
+        <button class="primary-btn" id="reflect-btn">Generate reflection</button>
+        <span class="reflect-note" id="reflect-note"></span>
+      </div>
+
+      <div class="reflect-output" id="reflect-output" hidden></div>
+      <p class="empty" id="reflect-empty">Your reflection will appear here. It reads only the data in this browser and sends it to your chosen AI provider using your own key.</p>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span>Compass — everything stays in your browser.</span>
+    <button class="link-btn" id="export-btn">Export data</button>
+    <button class="link-btn" id="import-btn">Import data</button>
+    <button class="link-btn danger" id="reset-btn">Reset all</button>
+    <input type="file" id="import-file" accept="application/json" hidden />
+  </footer>
+
+  <!-- ============ SETTINGS MODAL ============ -->
+  <div class="modal-backdrop" id="settings-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-head">
+        <h2 id="settings-title">Settings</h2>
+        <button class="ghost-btn" id="settings-close" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="muted small">
+          The weekly reflection calls an AI provider <strong>directly from your browser</strong> using a key you paste here.
+          The key is stored only in this browser's local storage and is sent only to the provider's API — never to any server of ours.
+        </p>
+
+        <label class="field">
+          <span>AI provider</span>
+          <select id="provider-select">
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>API key</span>
+          <input type="password" id="api-key" placeholder="Paste your API key" autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span>Model</span>
+          <input type="text" id="model-name" placeholder="Model id" />
+          <span class="hint" id="model-hint"></span>
+        </label>
+
+        <div class="settings-actions">
+          <button class="primary-btn" id="save-settings">Save</button>
+          <button class="ghost-btn" id="clear-key">Clear key</button>
+          <span class="saved-flag" id="saved-flag" hidden>Saved</span>
+        </div>
+
+        <p class="muted small">
+          Keys: get an Anthropic key at console.anthropic.com or an OpenAI key at platform.openai.com.
+          A browser-pasted key is convenient but visible to scripts on this page — use a key you can rotate.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="assets/storage.js"></script>
+  <script src="assets/ai.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
